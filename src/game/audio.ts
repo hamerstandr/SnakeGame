@@ -74,6 +74,42 @@ class Sfx {
   record() {
     [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.15, 'triangle', 0.06, i * 0.09));
   }
+
+  powerUp(type: string) {
+    switch (type) {
+      case 'slow':
+        [440, 550, 660].forEach((f, i) => this.tone(f, 0.1, 'sine', 0.05, i * 0.08));
+        break;
+      case 'double':
+        [523, 659, 784, 988].forEach((f, i) => this.tone(f, 0.08, 'triangle', 0.055, i * 0.06));
+        break;
+      case 'shield':
+        this.tone(330, 0.15, 'sine', 0.06);
+        this.tone(440, 0.15, 'sine', 0.06, 0.1);
+        this.tone(550, 0.2, 'sine', 0.06, 0.2);
+        break;
+      case 'ghost':
+        [392, 523, 659].forEach((f, i) => this.tone(f, 0.12, 'sine', 0.05, i * 0.1, f + 200));
+        break;
+    }
+  }
+
+  combo(count: number) {
+    if (count >= 10) {
+      [880, 1100, 1320].forEach((f, i) => this.tone(f, 0.1, 'triangle', 0.05, i * 0.07));
+    } else if (count >= 5) {
+      [660, 880].forEach((f, i) => this.tone(f, 0.08, 'triangle', 0.045, i * 0.06));
+    }
+  }
+
+  timeWarning() {
+    this.tone(880, 0.15, 'square', 0.04);
+    this.tone(660, 0.15, 'square', 0.04, 0.18);
+  }
+
+  gameOver() {
+    [440, 330, 220].forEach((f, i) => this.tone(f, 0.2, 'sawtooth', 0.05, i * 0.15, f - 100));
+  }
 }
 
 export const sfx = new Sfx();
