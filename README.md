@@ -4,9 +4,8 @@
 
 یک نسخه‌ی مدرن و زیبا از بازی کلاسیک مار با گرافیک خیره‌کننده، افکت‌های صوتی و حالت‌های مختلف بازی
 
-![مار شب‌تاب](https://github.com/user-attachments/assets/d4a234f3-cb2a-4115-898a-3fe8cb416f38)
+---<img width="439" height="960" alt="screencapture-localhost-snake-game-dist-index-php-2026-08-20-14_03_27" src="https://github.com/user-attachments/assets/3a3cc72b-5c54-4449-8902-9d4960e62fbe" />
 
----
 
 ## ✨ ویژگی‌ها
 
