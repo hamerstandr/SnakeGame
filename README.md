@@ -114,11 +114,13 @@
 
 ## 🚀 نصب و اجرا
 
-### پیش‌نیازها
+### روش اول: اجرای با Node.js (توسعه)
+
+#### پیش‌نیازها
 - Node.js نسخه 18 یا بالاتر
 - npm یا yarn
 
-### مراحل نصب
+#### مراحل نصب
 
 ```bash
 # کلون کردن مخزن
@@ -138,7 +140,48 @@ npm run build
 npm run typecheck
 ```
 
-### تکنولوژی‌های استفاده‌شده
+### روش دوم: اجرای با XAMPP (ساده و سریع) ⭐
+
+برای اجرای بازی بدون نیاز به Node.js و فقط با استفاده از XAMPP:
+
+#### مراحل اجرا:
+
+1. **کپی فایل‌ها به XAMPP**
+   - پوشه `dist/` را کپی کنید به مسیر:
+   ```
+   C:\xampp\htdocs\snake-game\
+   ```
+
+2. **اجرای Apache**
+   - XAMPP Control Panel را باز کنید
+   - دکمه **Start** کنار **Apache** را بزنید
+
+3. **اجرای بازی در مرورگر**
+   - برای نسخه ساده (تست سریع):
+   ```
+   http://localhost/snake-game/play.php
+   ```
+   - برای نسخه پیشرفته (Production):
+   ```
+   http://localhost/snake-game/index.php
+   ```
+
+#### 📋 مستندات بیشتر:
+- [راهنمای سریع شروع با XAMPP](RAPID_START_XAMPP.md) - راه‌اندازی در ۳ دقیقه
+- [راهنمای کامل نصب در XAMPP](dist/README-XAMPP.md) - جزئیات کامل
+
+#### مزایای اجرای با XAMPP:
+- ✅ بدون نیاز به نصب Node.js
+- ✅ اجرای سریع و آسان
+- ✅ مناسب برای تست و نمایش
+- ✅ سازگار با تمام نسخه‌های PHP 7.4+
+- ✅ بدون نیاز به تنظیمات اضافی
+
+---
+
+## تکنولوژی‌های استفاده‌شده
+
+### نسخه React/TypeScript (توسعه)
 
 | دسته | تکنولوژی |
 |------|----------|
@@ -149,6 +192,17 @@ npm run typecheck
 | انیمیشن | Framer Motion 11.16 |
 | آیکون | Lucide React |
 | صوت | WebAudio API |
+
+### نسخه PHP/XAMPP (اجرا)
+
+| ویژگی | توضیحات |
+|-------|---------|
+| سرور | Apache (XAMPP) |
+| زبان | PHP 7.4+ |
+| فایل‌ها | HTML/CSS/JS خالص |
+| حجم | کمتر از 50KB |
+| وابستگی | هیچ (بدون نیاز به npm) |
+| کش | gzip compression فعال |
 
 ---
 
@@ -233,7 +287,7 @@ npm run typecheck
 
 ## 🔧 توسعه
 
-### ساختار پروژه
+### ساختار پروژه (نسخه React/TypeScript)
 ```
 ├── src/
 │   ├── components/
@@ -250,12 +304,39 @@ npm run typecheck
 └── vite.config.js          # تنظیمات Vite
 ```
 
-### اسکریپت‌های npm
+### ساختار پروژه (نسخه PHP/XAMPP)
+```
+├── dist/
+│   ├── index.php            # نسخه پیشرفته با لود داینامیک
+│   ├── play.php             # نسخه ساده برای تست سریع
+│   ├── README-XAMPP.md      # راهنمای نصب در XAMPP
+│   ├── assets/
+│   │   ├── index-xxxx.js    # فایل JavaScript بهینه‌شده
+│   │   └── index-xxxx.css   # فایل CSS بهینه‌شده
+│   └── *.php                # فایل‌های PHP کمکی
+├── RAPID_START_XAMPP.md     # راهنمای سریع شروع
+└── README.md                # این فایل
+```
+
+### اسکریپت‌های npm (فقط نسخه توسعه)
 
 ```bash
 npm run dev       # اجرای سرور توسعه
-npm run build     # ساخت نسخه تولید
+npm run build     # ساخت نسخه تولید → خروجی در پوشه dist/
 npm run typecheck # بررسی تایپ TypeScript
+```
+
+### نحوه ساخت نسخه XAMPP
+
+```bash
+# ساخت نسخه production
+npm run build
+
+# کپی به XAMPP
+cp -r dist/ C:/xampp/htdocs/snake-game/
+
+# یا در ویندوز با PowerShell:
+Copy-Item -Path dist -Destination C:\xampp\htdocs\snake-game -Recurse
 ```
 
 ---
