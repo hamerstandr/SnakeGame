@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createGame, stepGame, updateFX, burst, addRipple, addFloat, randomEmpty,
-  faNum, DEATH_DELAY, GRID, CONTROL_MODES,
-  type Game, type Difficulty, type DifficultyId, type Vec, type ControlMode,
+  faNum, DEATH_DELAY, GRID, CONTROL_MODES, GAME_MODES, getPowerUpIcon, POWERUP_COLORS,
+  type Game, type Difficulty, type DifficultyId, type Vec, type ControlMode, type GameMode, type PowerUpType,
 } from '../game/engine';
 import { sfx } from '../game/audio';
 
@@ -74,6 +74,22 @@ const FlameIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
     <path d="M12 2s6 5.4 6 11a6 6 0 0 1-12 0c0-2.5 1-4.4 2.3-6 .4 1.1 1 1.9 1.9 2.4C10.1 7.6 10.8 4.8 12 2Z" />
   </svg>
 );
+const ClockIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
+  </svg>
+);
+const TrophyIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+    <path d="M8 21h8v-2H8v2ZM12 2a7 7 0 0 0-7 7v2.5c0 2.5 1.5 4.5 3.5 5.3V19h7v-2.2c2-.8 3.5-2.8 3.5-5.3V9a7 7 0 0 0-7-7Zm-5 9V9a5 5 0 0 1 5-5v10H7a2 2 0 0 1-2-2Zm10 2h-1V4a5 5 0 0 1 5 5v2.5a2 2 0 0 1-2 2h-2Z" />
+  </svg>
+);
+const ComboIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+    <path d="M12 2L9.5 9H2l6 4.5L5.5 22 12 17.5 18.5 22 16 13.5 22 9h-7.5L12 2Z" />
+  </svg>
+);
 const ArrowIcon = ({ rot }: { rot: number }) => (
   <svg viewBox="0 0 24 24" className="h-7 w-7" style={{ transform: `rotate(${rot}deg)` }} fill="currentColor" aria-hidden>
     <path d="M12 4.5 20 14h-5v5.5H9V14H4L12 4.5Z" />
@@ -110,21 +126,23 @@ interface Props {
   onDiffChange: (id: DifficultyId) => void;
   onGameOver: (score: number) => void;
   onToggleMute: () => void;
+  gameMode?: GameMode;
 }
 
-export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onToggleMute }: Props) {
+export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onToggleMute, gameMode = 'classic' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
-  const gameRef = useRef<Game>(createGame(diff));
+  const gameRef = useRef<Game>(createGame(diff, gameMode));
   const dirRef = useRef<Vec>({ x: 1, y: 0 });
   const prevTickRef = useRef<number | null>(null);
   const phaseRef = useRef(gameRef.current.phase);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   const [phase, setPhase] = useState(gameRef.current.phase);
-  const [hud, setHud] = useState({ score: 0, len: 3, speed: 1 });
+  const [hud, setHud] = useState({ score: 0, len: 3, speed: 1, combo: 0, maxCombo: 0, timeLeft: 0, survivalTime: 0 });
   const [isNewBest, setIsNewBest] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [activePowerUps, setActivePowerUps] = useState<Map<PowerUpType, number>>(new Map());
   const [controlMode, setControlMode] = useState<ControlMode>(() => {
     try {
       const v = localStorage.getItem('shabtab-control');
@@ -176,7 +194,16 @@ export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onTogg
   };
 
   const syncHud = (g: Game) => {
-    setHud({ score: g.score, len: g.snake.length, speed: g.baseTick / g.tickMs });
+    setHud({ 
+      score: g.score, 
+      len: g.snake.length, 
+      speed: g.baseTick / g.tickMs,
+      combo: g.combo,
+      maxCombo: g.maxCombo,
+      timeLeft: g.timeLeft || 0,
+      survivalTime: g.survivalTime,
+    });
+    setActivePowerUps(new Map(g.activePowerUps));
   };
 
   const queueDir = (d: Vec) => {
@@ -189,7 +216,7 @@ export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onTogg
   };
 
   const startGame = () => {
-    const g = createGame(diff);
+    const g = createGame(diff, gameMode);
     g.phase = 'running';
     gameRef.current = g;
     dirRef.current = { ...g.dir };
@@ -214,14 +241,14 @@ export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onTogg
 
   /* reset on difficulty change */
   useEffect(() => {
-    const g = createGame(diff);
+    const g = createGame(diff, gameMode);
     gameRef.current = g;
     dirRef.current = { ...g.dir };
     prevTickRef.current = null;
     setPhaseBoth('idle');
     setIsNewBest(false);
     syncHud(g);
-  }, [diff]);
+  }, [diff, gameMode]);
 
   /* ---------- keyboard ---------- */
   useEffect(() => {
@@ -375,6 +402,41 @@ export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onTogg
         ctx.beginPath();
         ctx.arc(bx, by, r * 1.55, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
         ctx.stroke();
+        ctx.restore();
+      }
+
+      // power-ups on grid
+      if (g.powerUp) {
+        const px = (g.powerUp.pos.x + 0.5) * cs;
+        const py = (g.powerUp.pos.y + 0.5) * cs;
+        const remain = g.powerUp.until - now;
+        const pulse = 1 + Math.sin(now / 150) * 0.15;
+        const r = cs * 0.35 * pulse;
+        
+        ctx.save();
+        const color = POWERUP_COLORS[g.powerUp.type];
+        const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 2.5);
+        glow.addColorStop(0, color.replace(')', ', 0.5)').replace('rgb', 'rgba'));
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px, py, r * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw icon background
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw emoji icon
+        ctx.font = `bold ${cs * 0.5}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(getPowerUpIcon(g.powerUp.type), px, py);
         ctx.restore();
       }
 
@@ -594,14 +656,64 @@ export default function SnakeGame({ diff, best, onDiffChange, onGameOver, onTogg
           </p>
         </div>
         <div className="rounded-xl border border-moss-300/10 bg-pine-900/80 px-3 py-2">
-          <p className="text-[10px] font-medium text-mist-500">طول مار</p>
-          <p className="font-display text-2xl leading-7 text-fern-400">{faNum(hud.len)}</p>
+          <p className="text-[10px] font-medium text-mist-500">کمبو</p>
+          <p className={`font-display text-2xl leading-7 flex items-center gap-1 ${hud.combo >= 5 ? 'text-amber-400' : 'text-fern-400'}`}>
+            <ComboIcon className="h-4 w-4" />
+            {faNum(hud.combo)}
+          </p>
         </div>
         <div className="rounded-xl border border-moss-300/10 bg-pine-900/80 px-3 py-2">
           <p className="text-[10px] font-medium text-mist-500">سرعت</p>
           <p className="font-display text-2xl leading-7 text-fern-400">×{speedX}</p>
         </div>
       </div>
+
+      {/* Extended HUD for game modes and power-ups */}
+      {(gameMode !== 'classic' || activePowerUps.size > 0) && (
+        <div className="mb-3 grid w-full max-w-[560px] grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          {gameMode === 'timeattack' && (
+            <div className={`rounded-xl border border-moss-300/10 bg-pine-900/80 px-3 py-2 ${hud.timeLeft < 10000 ? 'animate-pulse border-berry-500/30' : ''}`}>
+              <p className="text-[10px] font-medium text-mist-500 flex items-center gap-1">
+                <ClockIcon className="h-3 w-3" />
+                زمان باقی‌مانده
+              </p>
+              <p className={`font-display text-2xl leading-7 ${hud.timeLeft < 10000 ? 'text-berry-400' : 'text-sky-400'}`}>
+                {Math.ceil(hud.timeLeft / 1000)}ث
+              </p>
+            </div>
+          )}
+          {gameMode === 'survival' && (
+            <div className="rounded-xl border border-moss-300/10 bg-pine-900/80 px-3 py-2">
+              <p className="text-[10px] font-medium text-mist-500 flex items-center gap-1">
+                <TrophyIcon className="h-3 w-3" />
+                زمان بقا
+              </p>
+              <p className="font-display text-2xl leading-7 text-purple-400">
+                {(hud.survivalTime / 1000).toFixed(1)}ث
+              </p>
+            </div>
+          )}
+          {activePowerUps.size > 0 && (
+            <div className="col-span-2 sm:col-span-2 rounded-xl border border-moss-300/10 bg-pine-900/80 px-3 py-2">
+              <p className="text-[10px] font-medium text-mist-500 mb-1">قدرت‌های فعال</p>
+              <div className="flex gap-2 flex-wrap">
+                {Array.from(activePowerUps.entries()).map(([type, until]) => {
+                  const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+                  return (
+                    <span 
+                      key={type} 
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
+                      style={{ backgroundColor: POWERUP_COLORS[type] + '33', color: POWERUP_COLORS[type] }}
+                    >
+                      {getPowerUpIcon(type)} {remaining}ث
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* board */}
       <div
