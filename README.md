@@ -1,3 +1,4 @@
+<div dir="rtl">
 **🐍 مارِ شب‌تاب**
 
 **هسته‌ی بازی** (src/game/engine.ts)
@@ -34,3 +35,4 @@
 
 **اتمسفر**: پس‌زمینه‌ی جنگل شب با سه هاله‌ی نوری drifting، شبکه‌ی نقطه‌ای و ۹ شب‌تاب چشمک‌زن شناور، به‌علاوه افکت‌های صوتی WebAudio (خوردن، پاداش، باخت، رکورد) با کلید قطع صدا.
 <img width="468" height="359" alt="image" src="https://github.com/user-attachments/assets/d4a234f3-cb2a-4115-898a-3fe8cb416f38" />
+</div>
